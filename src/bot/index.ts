@@ -32,7 +32,7 @@ bot.command("draw", async (ctx) => {
         await ctx.replyWithChatAction("upload_photo");
 
         // استدعاء موديل الصور Gemini 3 Flash Image
-        const model = genAI.getGenerativeModel({ model: "gemini-3-flash-image" });
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
         const result = await model.generateContent(prompt);
         const response = await result.response;
