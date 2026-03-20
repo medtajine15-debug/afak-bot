@@ -5,7 +5,6 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const bot = new Bot(config.telegramBotToken);
 
-// إعداد الذكاء الاصطناعي للصور (تأكد من إضافة GEMINI_API_KEY في Render)
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 
 bot.use(async (ctx, next) => {
