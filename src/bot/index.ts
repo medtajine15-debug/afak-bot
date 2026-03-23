@@ -10,76 +10,44 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || "");
 bot.use(async (ctx, next) => {
     const userId = ctx.from?.id;
     if (!userId || !isUserAllowed(userId)) {
-        console.log(`Unauthorized access attempt from user ID: ${userId}`);
         return;
     }
     await next();
 });
 
 bot.command("start", async (ctx) => {
-    await ctx.reply("Hello! I am afak kids one bot, your personal AI agent.\n\nاستخدم أمر /draw متبوعاً بوصف لرسم صورة!");
+    await ctx.reply("أهلاً بك! أنا بوت AFAK الذكي.\nاستخدم /draw متبوعاً بوصف لرسم صورة.");
 });
 
-// ميزة توليد الصور الجديدة (Nano Banana 2)
+// ميزة توليد الصور السريعة (Nano Banana 2)
 bot.command("draw", async (ctx) => {
     const prompt = ctx.match;
-
     if (!prompt) {
-        return ctx.reply("أرجوك اكتب وصفاً للصورة بعد الأمر، مثلاً:\n/draw فضاء رقمي بأسلوب فني");
+        return ctx.reply("أرجوك اكتب وصفاً للصورة بعد الأمر، مثلاً:\n/draw مدينة قالمة في المستقبل");
     }
 
     try {
         await ctx.replyWithChatAction("upload_photo");
+        const encodedPrompt = encodeURIComponent(prompt as string);
+        const imageUrl = `https://pollinations.ai/p/${encodedPrompt}?width=1024&height=1024&seed=${Math.floor(Math.random() * 1000)}`;
 
-        // استدعاء موديل الصور Gemini 3 Flash Image
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-
-        // استخراج الصورة بصيغة Base64
-        const imagePart = response.candidates?.[0].content.parts[0].inlineData;
-
-        if (imagePart) {
-            const buffer = Buffer.from(imagePart.data, 'base64');
-            // إرسال الصورة باستخدام InputFile الخاص بـ grammy
-            await ctx.replyWithPhoto(new InputFile(buffer), {
-                caption: `تم توليد صورتك بناءً على: ${prompt}`
-            });
-        } else {
-            await ctx.reply("للأسف لم أستطع توليد الصورة، جرب وصفاً آخر.");
-        }
+        await ctx.replyWithPhoto(imageUrl, {
+            caption: `✨ تم توليد صورتك بنجاح!\n📝 الوصف: ${prompt}`
+        });
     } catch (err: any) {
-        console.error("Error in drawing:", err);
         await ctx.reply(`حدث خطأ أثناء الرسم: ${err.message}`);
-    }
-});
-
-bot.command("clear", async (ctx) => {
-    const userId = ctx.from?.id;
-    if (userId) {
-        const { memory } = await import('../agent/memory.js');
-        memory.clearHistory(userId);
-        await ctx.reply("Agent memory cleared.");
     }
 });
 
 bot.on("message:text", async (ctx) => {
     const userId = ctx.from.id;
     const text = ctx.message.text;
-
     try {
         await ctx.replyWithChatAction("typing");
         const reply = await runAgentLoop(userId, text);
-
-        if (reply.length > 4000) {
-            await ctx.reply(reply.substring(0, 4000) + "...\n\n(Message truncated)");
-        } else {
-            await ctx.reply(reply);
-        }
+        await ctx.reply(reply);
     } catch (err: any) {
-        console.error("Error processing message:", err);
-        await ctx.reply(`An error occurred: ${err.message}`);
+        await ctx.reply(`حدث خطأ: ${err.message}`);
     }
 });
 

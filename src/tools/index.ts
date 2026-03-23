@@ -10,3 +10,4 @@ export async function executeTool(toolName: string, args: any): Promise<any> {
             throw new Error(`Tool ${toolName} not found.`);
     }
 }
+export * from "./imageGen.js";
